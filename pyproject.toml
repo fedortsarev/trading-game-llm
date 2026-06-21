@@ -1,0 +1,16 @@
+[project]
+name = "trading-game"
+version = "0.1.0"
+description = "Trading game for LLM agents — deterministic engine, event stream, readers"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
