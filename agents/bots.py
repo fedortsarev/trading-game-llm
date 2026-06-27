@@ -12,10 +12,12 @@ from protocol.protocol import Action, AgentView, Quote
 
 
 class FairValueBot:
-    def __init__(self, player_id: int, spread: float = 2.0, size: int = 1):
+    def __init__(self, player_id: int, spread: float = 2.0, size: int = 1,
+                 bias: float = 0.0):
         self.player_id = player_id
         self.spread = spread
         self.size = size
+        self.bias = bias  # constant offset added to the fair-value estimate
 
     def fair_value(self, view: AgentView) -> float:
         pub = view.public
@@ -23,7 +25,7 @@ class FairValueBot:
         unknown_cards = (pub.n_players - 1) * pub.k_private
         own = sum(c.value for c in view.own_cards)
         public = sum(c.value for c in pub.public_cards)
-        return own + public + unknown_cards * card_mean
+        return own + public + unknown_cards * card_mean + self.bias
 
     def act(self, view: AgentView) -> Action:
         fv = self.fair_value(view)

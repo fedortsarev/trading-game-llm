@@ -11,6 +11,7 @@ State is fed as a compact structured snapshot each round, not a growing transcri
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 from dataclasses import asdict, dataclass, field
 
@@ -86,6 +87,11 @@ Each round, call the `submit_action` tool exactly once:
 Always include `fair_value_estimate` (your best estimate of the settlement value) and a \
 brief `rationale`. The rationale is for analysis only and is never shown to other \
 players, so be honest about your reasoning."""
+
+
+# Pins the prompt template that produced a score — folded into the benchmark Suite
+# hash so a leaderboard claim is reproducible against the exact wording used.
+PROMPT_VERSION = hashlib.sha256(SYSTEM_PROMPT.encode("utf-8")).hexdigest()[:12]
 
 
 class LLMAgent:

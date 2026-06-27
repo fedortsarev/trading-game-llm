@@ -19,7 +19,7 @@ Rounds are **sealed and simultaneous**: every agent submits quotes at once, a
 deterministic **call auction** clears them at a single price, results are revealed, and
 the next round begins. This makes the game a test of reasoning, not HTTP latency.
 
-## Status — Phases 1–2 (engine + protocol + bot + LLM agent)
+## Status — Phases 1–3 (engine + protocol + bot + LLM agent + scoring)
 
 Implemented:
 
@@ -37,13 +37,19 @@ Implemented:
   tier. Providers (`AnthropicClient`, `OpenAIClient`) sit behind one `LLMClient`
   interface; a `MockLLMClient` drives offline tests.
 - **JSONL event log** with canonical-JSON config hashing.
+- **Scoring layer** (`readers/`) — pure consumers of the event stream that score skill,
+  not luck: **regret vs. a reference policy** (replay the same deal, model PnL − bot
+  PnL), **calibration** (does a player's `fair_value_estimate` track the true sum?),
+  **price-discovery convergence**, and a **multi-seed, seat-rotating benchmark runner**
+  that reports a *distribution* (mean, CI, quantiles) under a content-addressed `Suite`
+  hash that pins rules + seeds + model id + prompt version + protocol version.
 
 > Note: a single-price call auction removes market-making *spread capture*, so the game
 > currently measures **fair-value estimation**, not spread quoting. A continuous order
 > book (and with it, market-making dynamics) is deferred to a later phase.
 
-Not yet built: async orchestration with per-agent timeouts, oracle/regret and
-calibration scoring, multi-seed runner, benchmark suite pinning, spectator renderer.
+Not yet built: async orchestration with per-agent timeouts, `EVOptimalBot`, replay of
+recorded LLM logs for distribution reproduction, spectator renderer.
 
 ## Quick start
 
@@ -53,6 +59,7 @@ Requires [`uv`](https://docs.astral.sh/uv/) and Python 3.12+.
 uv sync                              # create the venv and install deps
 
 uv run python -m orchestrator.runner # play a 5-round, 4-seat game; writes logs/*.jsonl
+uv run python -m readers.benchmark   # score a bot over 20 seeds; print a leaderboard line
 uv run pytest                        # run the test suite
 uv run python -m protocol.protocol   # print the action JSON Schema (tool-call schema)
 ```
@@ -82,8 +89,8 @@ protocol/      versioned Pydantic schemas + JSON Schema export
 agents/        Agent interface, FairValueBot, LLM worker + provider clients
 orchestrator/  game loop + event persistence (incl. model raw-output logging)
 store/         append-only JSONL log + canonical config hashing
-readers/       (Phase 4) benchmark / research / spectator consumers
-tests/         settlement, auction mechanics, determinism, isolation, LLM worker
+readers/       scoring: metrics, regret oracle, benchmark suite, research sandbox
+tests/         settlement, auction, determinism, isolation, LLM worker, scoring
 ```
 
 ## Design invariants
