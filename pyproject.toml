@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Trading game for LLM agents — deterministic engine, event stream, readers"
 requires-python = ">=3.12"
 dependencies = [
+    "anthropic>=0.112.0",
+    "openai>=2.44.0",
     "pydantic>=2",
 ]
 

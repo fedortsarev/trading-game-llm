@@ -38,4 +38,7 @@ POSITION_UPDATE = "position_update"
 ROUND_END = "round_end"
 SETTLEMENT = "settlement"
 GAME_END = "game_end"
-# model_raw_output is deferred to Phase 2 (no LLM yet).
+# Raw model output (prompt-side telemetry), emitted by the orchestrator — not the
+# pure engine — at RESEARCHER tier. The model call happens in the worker, outside
+# the engine, so the orchestrator (the persistence layer) stamps it into the log.
+MODEL_RAW_OUTPUT = "model_raw_output"
