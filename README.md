@@ -19,7 +19,7 @@ Rounds are **sealed and simultaneous**: every agent submits quotes at once, a
 deterministic **call auction** clears them at a single price, results are revealed, and
 the next round begins. This makes the game a test of reasoning, not HTTP latency.
 
-## Status — Phases 1–3 (engine + protocol + bot + LLM agent + scoring)
+## Status — Phases 1–4 (engine + protocol + bot + LLM agent + scoring + spectator)
 
 Implemented:
 
@@ -43,13 +43,19 @@ Implemented:
   **price-discovery convergence**, and a **multi-seed, seat-rotating benchmark runner**
   that reports a *distribution* (mean, CI, quantiles) under a content-addressed `Suite`
   hash that pins rules + seeds + model id + prompt version + protocol version.
+- **Spectator renderer** (`readers/spectator.py`) — replays a finished log as a
+  watchable round-by-round text VOD (quotes + rationale, auction clears, fills, running
+  positions, settlement). Reconstructs the game from the log alone, consuming only
+  `SPECTATOR`-tier events, with zero engine coupling and no write path back — so private
+  cards and raw model output can never leak into the feed.
 
 > Note: a single-price call auction removes market-making *spread capture*, so the game
 > currently measures **fair-value estimation**, not spread quoting. A continuous order
 > book (and with it, market-making dynamics) is deferred to a later phase.
 
 Not yet built: async orchestration with per-agent timeouts, `EVOptimalBot`, replay of
-recorded LLM logs for distribution reproduction, spectator renderer.
+recorded LLM logs for distribution reproduction, live-delayed spectator feed (only VOD
+replay exists today), continuous order book.
 
 ## Quick start
 
@@ -60,6 +66,7 @@ uv sync                              # create the venv and install deps
 
 uv run python -m orchestrator.runner # play a 5-round, 4-seat game; writes logs/*.jsonl
 uv run python -m readers.benchmark   # score a bot over 20 seeds; print a leaderboard line
+uv run python -m readers.spectator   # replay the latest log as a text VOD
 uv run pytest                        # run the test suite
 uv run python -m protocol.protocol   # print the action JSON Schema (tool-call schema)
 ```
@@ -89,8 +96,8 @@ protocol/      versioned Pydantic schemas + JSON Schema export
 agents/        Agent interface, FairValueBot, LLM worker + provider clients
 orchestrator/  game loop + event persistence (incl. model raw-output logging)
 store/         append-only JSONL log + canonical config hashing
-readers/       scoring: metrics, regret oracle, benchmark suite, research sandbox
-tests/         settlement, auction, determinism, isolation, LLM worker, scoring
+readers/       metrics, regret oracle, benchmark suite, research sandbox, spectator VOD
+tests/         settlement, auction, determinism, isolation, LLM worker, scoring, spectator
 ```
 
 ## Design invariants
